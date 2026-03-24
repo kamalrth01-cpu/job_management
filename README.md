@@ -32,7 +32,7 @@ A modern, full-stack web application for managing jobs in real-time with role-ba
 - **Database:** MongoDB with Mongoose
 - **Real-Time:** Socket.IO
 - **Styling:** Tailwind CSS
-- **File Uploads:** Native API routes + Multer
+- **File Uploads:** Cloudinary (v2)
 - **HTTP Client:** Axios
 
 ## 📁 Project Structure
@@ -190,9 +190,9 @@ The server will start at `http://localhost:3000`
 - No database polling - pure event-driven communication
 
 ### File Uploads
-- Files are saved to `/public/uploads`
-- File URLs are stored in database
-- Workers can download attachments directly
+- Files are uploaded directly to **Cloudinary**
+- Secure URLs are stored in the MongoDB database
+- Supports various file types (images, documents, etc.)
 
 ### Job Status
 - **Pending:** New jobs waiting to be completed
@@ -255,6 +255,9 @@ npm start
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `MONGODB_URI` | Yes | - | MongoDB connection string |
+| `CLOUDINARY_CLOUD_NAME` | Yes | - | Cloudinary Cloud Name |
+| `CLOUDINARY_API_KEY` | Yes | - | Cloudinary API Key |
+| `CLOUDINARY_API_SECRET` | Yes | - | Cloudinary API Secret |
 | `PORT` | No | 3000 | Server port |
 | `NODE_ENV` | No | development | Environment (development/production) |
 
