@@ -12,6 +12,32 @@ export default function AdminPage() {
   const [editingJob, setEditingJob] = useState(null);
   const [filter, setFilter] = useState('all'); // 'all', 'pending', 'completed'
 
+  // Report state
+  const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
+  const [reportMonth, setReportMonth] = useState(currentMonth);
+  const [reportLoading, setReportLoading] = useState({ excel: false, pdf: false });
+
+  const downloadReport = async (format) => {
+    setReportLoading((prev) => ({ ...prev, [format]: true }));
+    try {
+      const res = await fetch(`/api/jobs/report?month=${reportMonth}&format=${format}`);
+      if (!res.ok) throw new Error('Failed to generate report');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `jobs-report-${reportMonth}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      alert('Error downloading report: ' + err.message);
+    } finally {
+      setReportLoading((prev) => ({ ...prev, [format]: false }));
+    }
+  };
+
   // Initialize Socket.IO connection
   useEffect(() => {
     const socketInstance = io();
@@ -125,6 +151,47 @@ export default function AdminPage() {
           </div>
         </div>
 
+        {/* Monthly Report */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-4">📊 Monthly Report</h2>
+          <p className="text-gray-500 text-sm mb-4">Select a month to download a report of all jobs in that period.</p>
+          <div className="flex flex-wrap items-center gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-600 mb-1">Select Month</label>
+              <input
+                type="month"
+                value={reportMonth}
+                onChange={(e) => setReportMonth(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800"
+              />
+            </div>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => downloadReport('excel')}
+                disabled={reportLoading.excel}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold px-5 py-2 rounded-lg transition shadow"
+              >
+                {reportLoading.excel ? (
+                  <span>⏳ Generating…</span>
+                ) : (
+                  <span>⬇️ Download Excel</span>
+                )}
+              </button>
+              <button
+                onClick={() => downloadReport('pdf')}
+                disabled={reportLoading.pdf}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold px-5 py-2 rounded-lg transition shadow"
+              >
+                {reportLoading.pdf ? (
+                  <span>⏳ Generating…</span>
+                ) : (
+                  <span>⬇️ Download PDF</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Job Creation Form */}
         <JobForm
           onJobCreated={handleJobCreated}
@@ -132,6 +199,7 @@ export default function AdminPage() {
           onJobUpdated={handleJobUpdated}
           onCancelEdit={handleCancelEdit}
         />
+
 
         {/* Jobs List */}
         <div className="bg-white rounded-lg shadow-lg p-6">
