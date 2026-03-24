@@ -1,9 +1,13 @@
 import { connectDB } from '@/lib/db';
 import Job from '@/models/Job';
 import { broadcastJobCreated, broadcastJobUpdated } from '@/lib/socket';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { existsSync } from 'fs';
+import { v2 as cloudinary } from 'cloudinary';
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 // GET /api/jobs - Fetch all jobs
 export async function GET(request) {
@@ -53,22 +57,25 @@ export async function POST(request) {
     }
     const jobNumber = nextJobNumber.toString();
 
-    // Handle file uploads
-    const uploadDir = join(process.cwd(), 'public/uploads');
-    if (!existsSync(uploadDir)) {
-      await mkdir(uploadDir, { recursive: true });
-    }
-
+    // Handle file uploads to Cloudinary
     const uploadedFiles = [];
     for (const file of files) {
       if (file && file.size > 0) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        const filename = `${Date.now()}-${file.name}`;
-        const filepath = join(uploadDir, filename);
+        
+        const uploadResult = await new Promise((resolve, reject) => {
+          const uploadStream = cloudinary.uploader.upload_stream(
+            { folder: 'job_management', resource_type: 'auto' },
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          uploadStream.end(buffer);
+        });
 
-        await writeFile(filepath, buffer);
-        uploadedFiles.push(`/uploads/${filename}`);
+        uploadedFiles.push(uploadResult.secure_url);
       }
     }
 
