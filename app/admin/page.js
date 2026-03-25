@@ -15,7 +15,7 @@ export default function AdminPage() {
   // Report state
   const currentMonth = new Date().toISOString().slice(0, 7); // "YYYY-MM"
   const [reportMonth, setReportMonth] = useState(currentMonth);
-  const [reportLoading, setReportLoading] = useState({ excel: false, pdf: false });
+  const [reportLoading, setReportLoading] = useState({ excel: false });
 
   const downloadReport = async (format) => {
     setReportLoading((prev) => ({ ...prev, [format]: true }));
@@ -175,17 +175,6 @@ export default function AdminPage() {
                   <span>⏳ Generating…</span>
                 ) : (
                   <span>⬇️ Download Excel</span>
-                )}
-              </button>
-              <button
-                onClick={() => downloadReport('pdf')}
-                disabled={reportLoading.pdf}
-                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold px-5 py-2 rounded-lg transition shadow"
-              >
-                {reportLoading.pdf ? (
-                  <span>⏳ Generating…</span>
-                ) : (
-                  <span>⬇️ Download PDF</span>
                 )}
               </button>
             </div>
